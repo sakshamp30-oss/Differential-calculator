@@ -1,0 +1,984 @@
+x<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Math Solver</title>
+
+  <script src="https://js.puter.com/v2/"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    :root {
+      --bg0: #040816;
+      --bg1: #07111f;
+      --panel: rgba(8, 14, 28, 0.86);
+      --panel-2: rgba(10, 18, 35, 0.96);
+      --line: rgba(96, 155, 255, 0.18);
+      --line-strong: rgba(96, 155, 255, 0.42);
+      --text: #edf4ff;
+      --muted: #9cb0ce;
+      --accent: #3f8cff;
+      --accent-2: #0ea5ff;
+      --good: #37d39a;
+      --danger: #ff6b81;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+      --radius: 26px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(63, 140, 255, 0.18), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 255, 0.12), transparent 28%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x: hidden;
+    }
+
+    .wrap {
+      min-height: 100%;
+      padding: 28px;
+      display: grid;
+      place-items: center;
+    }
+
+    .shell {
+      width: min(1180px, 100%);
+      display: grid;
+      gap: 22px;
+      grid-template-columns: 1.02fr 0.98fr;
+      align-items: stretch;
+    }
+
+    .hero,
+    .card {
+      background: linear-gradient(180deg, rgba(10, 18, 34, 0.92), rgba(5, 10, 20, 0.94));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero {
+      padding: 34px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -55px -75px auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(63, 140, 255, 0.20), transparent 66%);
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 0 6px rgba(63, 140, 255, 0.12);
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 18px 0 10px;
+      font-size: clamp(2.3rem, 4.2vw, 4.45rem);
+      line-height: 0.98;
+      letter-spacing: -0.06em;
+    }
+
+    .lead {
+      max-width: 58ch;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.03rem;
+      line-height: 1.7;
+    }
+
+    .status-pill {
+      margin-top: 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 0 5px rgba(55, 211, 154, 0.15);
+    }
+
+    .features {
+      margin-top: 28px;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .feature {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(156, 176, 206, 0.14);
+    }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.98rem;
+    }
+
+    .feature span {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .card {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1.12rem;
+      color: #e7efff;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .spinner {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 2px solid rgba(156, 176, 206, 0.22);
+      border-top-color: var(--accent);
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    .spinner.show { display: inline-block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .tab {
+      padding: 13px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(156, 176, 206, 0.18);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      transition: 0.2s ease;
+    }
+
+    .tab:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(63,140,255,0.22), rgba(14,165,255,0.12));
+      border-color: var(--line-strong);
+    }
+
+    .panel {
+      display: none;
+      gap: 14px;
+      animation: fade 0.22s ease;
+    }
+
+    .panel.active { display: grid; }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: -3px;
+      margin-bottom: 8px;
+    }
+
+    textarea,
+    input[type="text"],
+    select {
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid rgba(156, 176, 206, 0.18);
+      background: rgba(3, 8, 18, 0.92);
+      color: var(--text);
+      padding: 15px 16px;
+      outline: none;
+      transition: 0.2s ease;
+      font: inherit;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+      border-color: var(--line-strong);
+      box-shadow: 0 0 0 4px rgba(63, 140, 255, 0.14);
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+
+    .uploader {
+      border: 1.5px dashed rgba(63, 140, 255, 0.42);
+      border-radius: 22px;
+      background: rgba(255,255,255,0.03);
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .file-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn,
+    .ghost {
+      border: 0;
+      cursor: pointer;
+      border-radius: 16px;
+      padding: 13px 16px;
+      font: inherit;
+      transition: 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 18px 35px rgba(63, 140, 255, 0.25);
+    }
+
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .ghost {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      border: 1px solid rgba(156, 176, 206, 0.18);
+    }
+
+    .ghost:hover { border-color: var(--line-strong); }
+
+    input[type="file"] { display: none; }
+
+    .preview {
+      display: none;
+      width: 100%;
+      max-height: 280px;
+      object-fit: contain;
+      border-radius: 18px;
+      border: 1px solid rgba(156, 176, 206, 0.12);
+      background: rgba(0,0,0,0.22);
+    }
+
+    .mini-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .result-toolbar,
+    .history-toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .result {
+      min-height: 290px;
+      border-radius: 22px;
+      border: 1px solid rgba(156, 176, 206, 0.16);
+      background: linear-gradient(180deg, rgba(2, 6, 14, 0.96), rgba(7, 14, 28, 0.96));
+      padding: 18px;
+      overflow: auto;
+      color: #dce8ff;
+    }
+
+    .result :where(h1,h2,h3,h4,h5,h6) {
+      margin: 0.2em 0 0.45em;
+      line-height: 1.2;
+    }
+
+    .result p,
+    .result li {
+      line-height: 1.7;
+      margin: 0.45em 0;
+    }
+
+    .result ul,
+    .result ol {
+      padding-left: 1.35rem;
+      margin: 0.45em 0;
+    }
+
+    .result pre {
+      overflow: auto;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(156, 176, 206, 0.12);
+    }
+
+    .result code {
+      background: rgba(255,255,255,0.06);
+      padding: 0.15em 0.35em;
+      border-radius: 8px;
+    }
+
+    .history {
+      display: grid;
+      gap: 12px;
+    }
+
+    .history-item {
+      border: 1px solid rgba(156, 176, 206, 0.14);
+      background: rgba(255,255,255,0.03);
+      border-radius: 18px;
+      padding: 14px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .history-item:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+    }
+
+    .history-item.active {
+      border-color: var(--line-strong);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .history-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .history-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #eef4ff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-time {
+      color: var(--muted);
+      font-size: 0.8rem;
+      flex: 0 0 auto;
+    }
+
+    .history-snippet {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .auth-note {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .stack { display: grid; gap: 12px; }
+
+    @media (max-width: 980px) {
+      .shell,
+      .split { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="shell">
+      <section class="hero">
+        <div class="badge"><span class="dot"></span> AI maths solver with Puter.js</div>
+        <h1>Maths calculator<br/>Made By Saksham Paudel</h1>
+        <p class="lead">
+          Type a question, upload a photo, or use your camera. The page reads the problem, sends it to Puter AI, and shows a cleaner answer with proper math rendering.
+        </p>
+
+        <div class="status-pill" id="authStatus">
+          <span class="status-dot"></span>
+          <span>Checking sign-in…</span>
+        </div>
+
+        <div class="features">
+          <div class="feature">
+            <strong>Type mode</strong>
+            <span>Paste equations, word problems, algebra, calculus, statistics, and more.</span>
+          </div>
+          <div class="feature">
+            <strong>Camera / upload</strong>
+            <span>Capture a handwritten or printed problem and extract the text automatically.</span>
+          </div>
+          <div class="feature">
+            <strong>History</strong>
+            <span>Keep recent answers saved in your browser so you can open them again later.</span>
+          </div>
+          <div class="feature">
+            <strong>Export / share</strong>
+            <span>Copy, download, or share the answer with one click when the browser supports it.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="header-row">
+          <h2 class="section-title">Solve a problem</h2>
+          <div class="status"><span class="spinner" id="spinner"></span><span id="statusText">Ready</span></div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-target="typePanel">Type</button>
+          <button class="tab" data-target="uploadPanel">Upload</button>
+          <button class="tab" data-target="cameraPanel">Camera</button>
+        </div>
+
+        <div id="typePanel" class="panel active">
+          <label>
+            <div class="hint">Enter the maths question</div>
+            <textarea id="typedProblem" placeholder="Example: Solve 2x^2 - 5x - 3 = 0"></textarea>
+          </label>
+        </div>
+
+        <div id="uploadPanel" class="panel">
+          <div class="uploader">
+            <div class="hint">Upload a photo, screenshot, or PDF of the problem</div>
+            <div class="file-row">
+              <label class="ghost" for="fileInput">Choose file</label>
+              <input id="fileInput" type="file" accept="image/*,application/pdf" />
+              <button class="ghost" id="clearFileBtn" type="button">Clear file</button>
+            </div>
+            <img id="preview" class="preview" alt="Preview" />
+            <div class="hint" id="fileName">No file selected</div>
+          </div>
+        </div>
+
+        <div id="cameraPanel" class="panel">
+          <div class="uploader">
+            <div class="hint">Open the camera on mobile or supported devices</div>
+            <div class="file-row">
+              <label class="ghost" for="cameraInput">Take photo</label>
+              <input id="cameraInput" type="file" accept="image/*" capture="environment" />
+              <button class="ghost" id="clearCameraBtn" type="button">Clear camera photo</button>
+            </div>
+            <img id="cameraPreview" class="preview" alt="Camera preview" />
+            <div class="hint" id="cameraName">No camera photo selected</div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <div>
+            <div class="hint">Answer style</div>
+            <select id="answerStyle">
+              <option value="step-by-step">Step-by-step</option>
+              <option value="short">Short answer only</option>
+              <option value="exam">Exam-friendly format</option>
+            </select>
+          </div>
+
+          <div class="file-row">
+            <button class="btn" id="solveBtn" type="button">Solve with AI</button>
+            <button class="ghost" id="connectBtn" type="button">Connect / Check sign-in</button>
+          </div>
+        </div>
+
+        <div class="footer-note">
+          Tip: for image problems, the page first extracts the text, then asks AI to solve it.
+        </div>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1;">
+        <div class="mini-row">
+          <h2 class="section-title">Solution</h2>
+          <div class="result-toolbar">
+            <button class="ghost" id="copyBtn" type="button">Copy answer</button>
+            <button class="ghost" id="downloadBtn" type="button">Download .md</button>
+            <button class="ghost" id="shareBtn" type="button">Share</button>
+            <button class="ghost" id="clearHistoryBtn" type="button">Clear history</button>
+          </div>
+        </div>
+        <div id="result" class="result">Your answer will appear here.</div>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1;">
+        <div class="mini-row">
+          <h2 class="section-title">History</h2>
+          <div class="history-toolbar">
+            <button class="ghost" id="exportHistoryBtn" type="button">Export history</button>
+            <button class="ghost" id="refreshHistoryBtn" type="button">Refresh</button>
+          </div>
+        </div>
+        <div id="history" class="history"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.panel');
+    const solveBtn = document.getElementById('solveBtn');
+    const connectBtn = document.getElementById('connectBtn');
+    const result = document.getElementById('result');
+    const statusText = document.getElementById('statusText');
+    const spinner = document.getElementById('spinner');
+    const authStatus = document.getElementById('authStatus');
+    const typedProblem = document.getElementById('typedProblem');
+    const fileInput = document.getElementById('fileInput');
+    const cameraInput = document.getElementById('cameraInput');
+    const fileName = document.getElementById('fileName');
+    const cameraName = document.getElementById('cameraName');
+    const preview = document.getElementById('preview');
+    const cameraPreview = document.getElementById('cameraPreview');
+    const clearFileBtn = document.getElementById('clearFileBtn');
+    const clearCameraBtn = document.getElementById('clearCameraBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const historyEl = document.getElementById('history');
+    const exportHistoryBtn = document.getElementById('exportHistoryBtn');
+    const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
+    const answerStyle = document.getElementById('answerStyle');
+
+    let currentFile = null;
+    let currentCameraFile = null;
+    let history = loadHistory();
+    let lastSolvedAnswer = '';
+    let lastSolvedProblem = '';
+
+    function setActivePanel(targetId) {
+      tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.target === targetId));
+      panels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
+    }
+
+    tabs.forEach(tab => tab.addEventListener('click', () => setActivePanel(tab.dataset.target)));
+
+    function setBusy(isBusy, text = 'Working...') {
+      solveBtn.disabled = isBusy;
+      connectBtn.disabled = isBusy;
+      spinner.classList.toggle('show', isBusy);
+      statusText.textContent = isBusy ? text : 'Ready';
+    }
+
+    function setAuthStatus(message, tone = 'neutral') {
+      authStatus.innerHTML = `<span class="status-dot"></span><span>${message}</span>`;
+      authStatus.style.borderColor = tone === 'good' ? 'rgba(55, 211, 154, 0.42)' : tone === 'bad' ? 'rgba(255, 107, 129, 0.42)' : 'var(--line)';
+    }
+
+    function resetImageView(imgEl, labelEl, fileObj) {
+      if (!fileObj) {
+        imgEl.style.display = 'none';
+        imgEl.src = '';
+        labelEl.textContent = 'No file selected';
+        return;
+      }
+      const url = URL.createObjectURL(fileObj);
+      imgEl.src = url;
+      imgEl.style.display = 'block';
+      labelEl.textContent = fileObj.name || 'Image selected';
+      imgEl.onload = () => URL.revokeObjectURL(url);
+    }
+
+    fileInput.addEventListener('change', () => {
+      currentFile = fileInput.files[0] || null;
+      resetImageView(preview, fileName, currentFile);
+    });
+
+    cameraInput.addEventListener('change', () => {
+      currentCameraFile = cameraInput.files[0] || null;
+      resetImageView(cameraPreview, cameraName, currentCameraFile);
+    });
+
+    clearFileBtn.addEventListener('click', () => {
+      currentFile = null;
+      fileInput.value = '';
+      resetImageView(preview, fileName, null);
+    });
+
+    clearCameraBtn.addEventListener('click', () => {
+      currentCameraFile = null;
+      cameraInput.value = '';
+      resetImageView(cameraPreview, cameraName, null);
+    });
+
+    function loadHistory() {
+      try {
+        return JSON.parse(localStorage.getItem('ai-math-history') || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveHistory() {
+      localStorage.setItem('ai-math-history', JSON.stringify(history.slice(0, 20)));
+    }
+
+    function addHistoryItem(entry) {
+      history = [entry, ...history.filter(item => item.id !== entry.id)].slice(0, 20);
+      saveHistory();
+      renderHistory();
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function markdownToHtml(md) {
+      const rendered = marked.parse(md || '', { breaks: true });
+      return DOMPurify.sanitize(rendered);
+    }
+
+    async function renderAnswer(md) {
+      result.innerHTML = markdownToHtml(md);
+      if (window.MathJax?.typesetPromise) {
+        try {
+          await MathJax.typesetPromise([result]);
+        } catch (err) {
+          console.warn('MathJax render failed:', err);
+        }
+      }
+    }
+
+    function formatShort(text, max = 140) {
+      const cleaned = String(text || '').replace(/\s+/g, ' ').trim();
+      return cleaned.length > max ? cleaned.slice(0, max - 1) + '…' : cleaned;
+    }
+
+    function renderHistory() {
+      if (!history.length) {
+        historyEl.innerHTML = `<div class="footer-note">No saved answers yet.</div>`;
+        return;
+      }
+
+      historyEl.innerHTML = history.map((item, index) => `
+        <div class="history-item ${index === 0 ? 'active' : ''}" data-id="${item.id}">
+          <div class="history-top">
+            <div class="history-title">${escapeHtml(formatShort(item.problem, 80) || 'Untitled problem')}</div>
+            <div class="history-time">${escapeHtml(item.timeLabel)}</div>
+          </div>
+          <div class="history-snippet">${escapeHtml(formatShort(item.answer.replace(/\n+/g, ' '), 180))}</div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.history-item').forEach(el => {
+        el.addEventListener('click', async () => {
+          const item = history.find(h => h.id === el.dataset.id);
+          if (!item) return;
+          await renderAnswer(item.answer);
+          lastSolvedAnswer = item.answer;
+          lastSolvedProblem = item.problem;
+          document.querySelectorAll('.history-item').forEach(x => x.classList.remove('active'));
+          el.classList.add('active');
+          statusText.textContent = 'Loaded from history';
+        });
+      });
+    }
+
+    function buildPrompt(problemText, style) {
+      const styleInstructions = {
+        'step-by-step': 'Show complete step-by-step working, then the final answer clearly at the end.',
+        'short': 'Give only the final answer, with a very short working note if needed.',
+        'exam': 'Format the solution like a neat exam answer with steps and a final boxed answer.'
+      };
+
+      return `You are a precise maths tutor and calculator. Solve the problem carefully and verify the result. ${styleInstructions[style]}
+
+Rules:
+- Do not invent extra information.
+- If the question is ambiguous, state the ambiguity and solve the most likely interpretation.
+- Keep notation neat and easy to copy.
+- For equations, include the answer set.
+- For word problems, explain the setup briefly.
+- Use markdown headings for Problem, Working, and Final answer.
+- Use LaTeX for math, e.g. $x^2$, $$...$$, and \boxed{} for the final answer.
+
+Problem:
+${problemText}`;
+    }
+
+    async function extractTextFromFile(file) {
+      // Puter OCR can read images directly. PDFs may work depending on browser support.
+      return await puter.ai.img2txt(file);
+    }
+
+    function activeInputProblem() {
+      const activePanel = document.querySelector('.panel.active').id;
+      const activeFile = activePanel === 'uploadPanel' ? currentFile : activePanel === 'cameraPanel' ? currentCameraFile : null;
+      return { activePanel, activeFile };
+    }
+
+    async function ensureSignedIn() {
+      try {
+        if (!window.puter?.auth) {
+          setAuthStatus('Puter did not load. Check the script tag.', 'bad');
+          return false;
+        }
+
+        const signedIn = await puter.auth.isSignedIn();
+        if (signedIn) {
+          setAuthStatus('Signed in and ready', 'good');
+          return true;
+        }
+
+        setAuthStatus('Not signed in yet — connect once to enable AI', 'neutral');
+        return false;
+      } catch (err) {
+        console.error(err);
+        setAuthStatus('Auth check failed. Try refreshing the page.', 'bad');
+        return false;
+      }
+    }
+
+    async function connectPuter() {
+      try {
+        setBusy(true, 'Checking sign-in...');
+        const signedIn = await ensureSignedIn();
+        if (signedIn) {
+          setBusy(false);
+          return;
+        }
+
+        setBusy(true, 'Opening sign-in...');
+        await puter.auth.signIn();
+        await ensureSignedIn();
+        setBusy(false);
+      } catch (err) {
+        setBusy(false);
+        setAuthStatus('Sign-in was cancelled or blocked', 'bad');
+        result.textContent = `Sign-in error: ${err?.message || err}`;
+      }
+    }
+
+    async function solveProblem() {
+      const style = answerStyle.value;
+      let problemText = typedProblem.value.trim();
+      const { activeFile } = activeInputProblem();
+
+      try {
+        setBusy(true, activeFile ? 'Reading problem...' : 'Solving problem...');
+        result.textContent = '';
+
+        if (activeFile) {
+          const extracted = await extractTextFromFile(activeFile);
+          const extractedText = String(extracted || '').trim();
+          if (!extractedText) {
+            throw new Error('No readable text found in the file. Try a clearer image or a tighter crop.');
+          }
+          problemText = `${problemText ? problemText + '\n\n' : ''}${extractedText}`;
+        }
+
+        if (!problemText) {
+          throw new Error('Please type a problem or upload/capture an image first.');
+        }
+
+        const signedIn = await ensureSignedIn();
+        if (!signedIn) {
+          await connectPuter();
+        }
+
+        setBusy(true, 'Thinking...');
+        const prompt = buildPrompt(problemText, style);
+        const response = await puter.ai.chat(prompt, { model: 'gpt-5-nano' });
+        const answer = typeof response === 'string'
+          ? response
+          : (response?.message?.content || response?.text || JSON.stringify(response, null, 2));
+
+        lastSolvedProblem = problemText;
+        lastSolvedAnswer = answer;
+
+        await renderAnswer(answer);
+        const item = {
+          id: crypto.randomUUID(),
+          timeLabel: new Date().toLocaleString(),
+          problem: problemText,
+          answer
+        };
+        addHistoryItem(item);
+        setBusy(false);
+      } catch (err) {
+        setBusy(false);
+        const message = err?.message || String(err);
+        result.innerHTML = `<p style="color: var(--danger); font-weight: 700;">Error</p><p>${escapeHtml(message)}</p>`;
+        statusText.textContent = 'Ready';
+      }
+    }
+
+    function downloadText(filename, text) {
+      const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function copyCurrentAnswer() {
+      if (!lastSolvedAnswer.trim()) return;
+      await navigator.clipboard.writeText(lastSolvedAnswer);
+      statusText.textContent = 'Copied to clipboard';
+      setTimeout(() => statusText.textContent = 'Ready', 1200);
+    }
+
+    async function shareCurrentAnswer() {
+      if (!lastSolvedAnswer.trim()) return;
+      const shareData = {
+        title: 'AI Math Solver Answer',
+        text: `${lastSolvedProblem ? 'Problem:\n' + lastSolvedProblem + '\n\n' : ''}${lastSolvedAnswer}`
+      };
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.text);
+        statusText.textContent = 'Shared text copied';
+        setTimeout(() => statusText.textContent = 'Ready', 1200);
+      }
+    }
+
+    function exportHistory() {
+      const exportText = history.map((item, idx) => {
+        return `# ${idx + 1}\nTime: ${item.timeLabel}\n\nProblem:\n${item.problem}\n\nAnswer:\n${item.answer}\n`;
+      }).join('\n---\n\n');
+      downloadText(`math-history-${new Date().toISOString().slice(0, 10)}.md`, exportText || '# Empty history');
+    }
+
+    solveBtn.addEventListener('click', solveProblem);
+    connectBtn.addEventListener('click', connectPuter);
+    copyBtn.addEventListener('click', copyCurrentAnswer);
+    downloadBtn.addEventListener('click', () => downloadText('math-answer.md', lastSolvedAnswer || result.textContent || ''));
+    shareBtn.addEventListener('click', shareCurrentAnswer);
+    clearHistoryBtn.addEventListener('click', () => {
+      history = [];
+      saveHistory();
+      renderHistory();
+      statusText.textContent = 'History cleared';
+      setTimeout(() => statusText.textContent = 'Ready', 1200);
+    });
+    exportHistoryBtn.addEventListener('click', exportHistory);
+    refreshHistoryBtn.addEventListener('click', renderHistory);
+
+    typedProblem.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') solveProblem();
+    });
+
+    renderHistory();
+    ensureSignedIn();
+  </script>
+</body>
+</html>
