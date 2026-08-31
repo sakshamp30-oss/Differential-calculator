@@ -1,17 +1,34 @@
 # Differential Calculator
 
-A single-page web application designed to compute differentials and mathematical operations.
+An interactive web application designed to compute mathematical differentials and symbolic calculations.
 
 ---
 
-## Features
+## Live Demo
 
-- Interactive HTML interface for differential calculations
-- Client-side execution with no external backend dependency
+Access the live application directly in your browser:
+
+`https://sakshamp30-oss.github.io/Differential-calculator/`
 
 ---
 
-## Usage
+## Key Features
 
-Open `maths.html` in any modern web browser to run the application locally.
+- Interactive user interface for differential calculus
+- Integrated Putter AI API for AI targeting and computational assistance
+- Direct web execution with immediate output generation
 
+---
+
+## Usage Instructions
+
+### Online Access
+Visit the live GitHub Pages application URL provided above.
+
+### Local Access
+- **Clone the repository**
+  ```bash
+  git clone [https://github.com/sakshamp30-oss/Differential-calculator.git](https://github.com/sakshamp30-oss/Differential-calculator.git)
+  cd Differential-calculator
+  Open the application
+Open index.html in any modern web browser.
